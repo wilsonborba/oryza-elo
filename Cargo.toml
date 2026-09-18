@@ -1,0 +1,24 @@
+[package]
+name = "oryza-elo"
+version = "0.1.0"
+edition = "2021"
+authors = ["Wilson Borba <wilson@asodya.com>"]
+description = "Oryza-Elo: High-performance edge computing microservice for rice phenological stage classification"
+
+[dependencies]
+tokio = { version = "1.38", features = ["full"] }
+axum = "0.7"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tower-http = { version = "0.5", features = ["cors", "trace"] }
+dotenvy = "0.15"
+
+[[bin]]
+name = "oryza-elo"
+path = "src/main.rs"
+
+[lib]
+name = "oryza_elo"
+path = "src/lib.rs"

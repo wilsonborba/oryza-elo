@@ -1,0 +1,36 @@
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+
+# Documentation guardrail (never pushed — see AI_AGENT_Working_Rules.md, section 9)
+docs/
+
+# Python virtual environments and caches
+.venv/
+.venv.*/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Rust build artifacts
+/target/
+**/*.rs.bk
+
+# Local/assistant context and scratch files
+context/
+.scratch/
+*.local.md
+
+# OS and IDE files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
