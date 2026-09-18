@@ -6,6 +6,8 @@
 //!
 //! ## Regra Estrita para Agentes de IA:
 //! 1. É terminantemente PROIBIDO criar pastas paralelas, temporárias ou auxiliares fora da estrutura oficial.
-//! 2. Todo arquivo deve pertencer estritamente a esta camada definida.
+//! 2. Configurações não-secretas e reutilizáveis vivem em `settings.rs`, NUNCA no `.env`.
 //! 3. Se um agente planeja criar ou alterar qualquer diretório que não foi explicitamente
 //!    alinhado com o usuário, ele DEVE PARAR E PEDIR AUTORIZAÇÃO ANTES.
+
+pub mod settings;
