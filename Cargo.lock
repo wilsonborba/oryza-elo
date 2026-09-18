@@ -331,6 +331,7 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "dotenvy",
+ "lazy_static",
  "serde",
  "serde_json",
  "tokio",
