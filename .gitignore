@@ -19,6 +19,7 @@ build/
 .mypy_cache/
 .ruff_cache/
 src/dal/data/raw/nasa_power_cache/
+catboost_info/
 
 # Rust build artifacts
 /target/
