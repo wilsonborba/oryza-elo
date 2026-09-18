@@ -10,9 +10,11 @@
 //!      estritamente NULOS (`Option::None`) aqui em `settings.rs` por padrão.
 //!    - Cada pessoa/máquina que clona o projeto define seus próprios caminhos e credenciais no `.env`.
 //!    - Em `settings.rs`, qualquer variável de caminho local ou segredo nasce como `None`.
-//! 3. **Arquitetura de Apresentação (Frontend no Cloudflare)**:
-//!    - Não servimos arquivos estáticos pelo Axum Rust (sem static_dir ou templates_dir no backend),
-//!      pois o frontend/simulador vive e é servido independentemente via Cloudflare.
+//! 3. **Arquitetura de Apresentação (Dualidade Flutter Web: Borda vs Nuvem)**:
+//!    - No Raspberry Pi (modo local/borda): o binário Rust serve diretamente os assets estáticos
+//!      do Flutter Web via `ServeDir` se `STATIC_DIR` estiver configurado no `.env` e a pasta existir.
+//!    - Na Nuvem Asodya: `static_dir` permanece `None`, pois o frontend vive e é distribuído
+//!      globalmente via Cloudflare Pages e o Axum atua como API headless pura.
 
 use dotenvy::dotenv;
 use lazy_static::lazy_static;
@@ -70,6 +72,11 @@ pub struct Settings {
     /// Caminho local para o dataset processado (definido no .env de quem clonou; default NULO)
     pub processed_data_path: Option<String>,
 
+    /// Caminho opcional para os assets estáticos do Flutter Web pré-buildado.
+    /// - No Raspberry Pi / Modo Local: apontado no .env (ex: STATIC_DIR=src/presentation/static)
+    /// - Na Nuvem Asodya: None (servido externamente via Cloudflare Pages)
+    pub static_dir: Option<String>,
+
     /// Chave ou token de API privada (definido no .env; default NULO)
     pub private_api_token: Option<String>,
 }
@@ -88,6 +95,7 @@ impl Default for Settings {
             // Paths locais e segredos são estritamente nulos por padrão no código
             raw_data_path: None,
             processed_data_path: None,
+            static_dir: None,
             private_api_token: None,
         }
     }
@@ -114,6 +122,7 @@ lazy_static! {
         // Preenchidos apenas a partir do .env local da máquina (default None / nulo)
         let raw_data_path = env::var("RAW_DATA_PATH").ok();
         let processed_data_path = env::var("PROCESSED_DATA_PATH").ok();
+        let static_dir = env::var("STATIC_DIR").ok();
         let private_api_token = env::var("PRIVATE_API_TOKEN").ok();
 
         Settings {
@@ -125,6 +134,7 @@ lazy_static! {
             base_temp_celsius,
             raw_data_path,
             processed_data_path,
+            static_dir,
             private_api_token,
         }
     };
