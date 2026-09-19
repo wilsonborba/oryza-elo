@@ -3,7 +3,7 @@
 //! Route registration, middlewares and fallback static service mounting.
 
 use crate::presentation::api::handlers::{
-    config, devices, health, parcels, phenology, weather,
+    benchmark, config, devices, health, parcels, phenology, weather,
 };
 use crate::presentation::api::state::AppState;
 use axum::routing::{get, post};
@@ -42,13 +42,18 @@ pub fn create_router(state: AppState) -> Router {
         // Weather Ingestion & Time Series
         .route("/weather/upload-csv", post(weather::upload_csv_multipart))
         .route("/weather/ingest", post(weather::ingest_csv_json))
+        .route("/weather/record", post(weather::ingest_single_record))
         .route("/weather/records", get(weather::get_records))
+        .route("/weather/history", get(weather::get_records))
         // Phenology Inference & History
         .route("/phenology/predict", post(phenology::predict_stage))
         .route("/phenology/latest", get(phenology::get_latest_prediction))
         .route("/phenology/history", get(phenology::get_prediction_history))
-        // Edge Node Configuration
-        .route("/config", get(config::get_all_config).put(config::update_config));
+        // Edge Node Configuration & Hardware Benchmarks
+        .route("/config", get(config::get_all_config).put(config::update_config))
+        .route("/latency-benchmark", get(benchmark::run_latency_benchmark))
+        .route("/benchmarks/latency", get(benchmark::run_latency_benchmark));
+
 
     let mut router = Router::new()
         .route("/health", get(health::health_check))

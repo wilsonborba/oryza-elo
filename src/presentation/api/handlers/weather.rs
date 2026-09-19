@@ -136,3 +136,63 @@ pub async fn get_records(
 
     Ok(Json(records))
 }
+
+#[derive(Deserialize)]
+pub struct SingleRecordRequest {
+    pub parcel_id: String,
+    pub date: NaiveDate,
+    pub t_max: f64,
+    pub t_min: f64,
+    pub precipitation_mm: f64,
+    pub radiation_mj_m2: f64,
+    pub relative_humidity_pct: f64,
+    pub source: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct SingleRecordResponse {
+    pub message: String,
+    pub parcel_id: String,
+    pub date: NaiveDate,
+    pub record: DailyWeatherRecord,
+}
+
+/// Ingests a single daily weather record (from LoRaWAN / Modbus / MQTT edge gateway).
+pub async fn ingest_single_record(
+    State(state): State<AppState>,
+    Json(payload): Json<SingleRecordRequest>,
+) -> Result<(StatusCode, Json<SingleRecordResponse>), AppError> {
+    let _ = state
+        .parcel_repo
+        .get_by_id(&payload.parcel_id)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Parcel {} not found", payload.parcel_id)))?;
+
+    let record = DailyWeatherRecord {
+        date: payload.date,
+        t_max: payload.t_max,
+        t_min: payload.t_min,
+        precipitation_mm: payload.precipitation_mm,
+        radiation_mj_m2: payload.radiation_mj_m2,
+        relative_humidity_pct: payload.relative_humidity_pct,
+        source: payload.source.unwrap_or_else(|| "Single_Sensor_Ingest".to_string()),
+    };
+
+    record.validate().map_err(AppError::Domain)?;
+
+    state
+        .weather_repo
+        .insert_batch(&payload.parcel_id, &[record.clone()])
+        .await?;
+
+    Ok((
+        StatusCode::CREATED,
+        Json(SingleRecordResponse {
+            message: "Weather record ingested successfully".to_string(),
+            parcel_id: payload.parcel_id,
+            date: payload.date,
+            record,
+        }),
+    ))
+}
+

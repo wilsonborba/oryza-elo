@@ -231,7 +231,7 @@ async fn test_full_api_e2e_lifecycle() {
     assert_eq!(configs["nightly_cron_enabled"], "true");
     assert_eq!(configs["cron_time"], "23:59");
 
-    // 9. Test Autonomous Cron Execution
+    // 9. Test Autonomous Cron Execution & Recovery
     let eval_count = CronScheduler::execute_evaluation_for_all_parcels(
         &state.parcel_repo,
         &state.weather_repo,
@@ -244,5 +244,61 @@ async fn test_full_api_e2e_lifecycle() {
 
     assert_eq!(eval_count, 1, "Should have evaluated 1 parcel autonomously");
 
+    // 10. Test Single Weather Record Ingestion & History Query Alias
+    let single_record_payload = serde_json::json!({
+        "parcel_id": "talhao-demo-1",
+        "date": "2026-06-06",
+        "t_max": 33.5,
+        "t_min": 22.5,
+        "precipitation_mm": 5.0,
+        "radiation_mj_m2": 21.0,
+        "relative_humidity_pct": 82.0,
+        "source": "LoRaWAN_Station_A"
+    });
+
+    let req = Request::builder()
+        .uri("/api/v1/weather/record")
+        .method("POST")
+        .header("content-type", "application/json")
+        .body(Body::from(serde_json::to_string(&single_record_payload).unwrap()))
+        .unwrap();
+
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::CREATED);
+
+    let req = Request::builder()
+        .uri("/api/v1/weather/history?parcel_id=talhao-demo-1&days=10")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let history_records: Value = serde_json::from_slice(&body).unwrap();
+    assert!(history_records.as_array().unwrap().len() >= 1);
+
+    // 11. Test Live Edge Latency Benchmark Endpoint
+    let req = Request::builder()
+        .uri("/api/v1/latency-benchmark?iterations=50")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let benchmark: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(benchmark["status"], "passed");
+    assert_eq!(benchmark["iterations"], 50);
+    assert!(benchmark["mean_latency_ms"].as_f64().unwrap() < 5.0);
+    println!(
+        "Live Edge Latency Benchmark: Mean: {:.4} ms, Speedup vs 5ms: {:.1}x",
+        benchmark["mean_latency_ms"].as_f64().unwrap(),
+        benchmark["speedup_vs_edge_ceiling"].as_f64().unwrap()
+    );
+
     println!("All E2E API integration tests passed successfully!");
 }
+
