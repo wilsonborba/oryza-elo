@@ -14,5 +14,8 @@
 //! 3. Se um agente planeja criar ou alterar qualquer diretório que não foi explicitamente
 //!    alinhado com o usuário, ele DEVE PARAR E PEDIR AUTORIZAÇÃO ANTES.
 
+pub mod database;
 pub mod local;
 pub mod remote;
+
+pub use database::*;
