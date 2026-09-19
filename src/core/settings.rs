@@ -21,7 +21,7 @@ use lazy_static::lazy_static;
 use std::env;
 
 /// Nome oficial da aplicação
-pub const DEFAULT_APP_NAME: &str = "oryza-elo";
+pub const DEFAULT_APP_NAME: &str = "oryzaelo_engine";
 
 /// Host padrão do servidor
 pub const DEFAULT_SERVER_HOST: &str = "0.0.0.0";

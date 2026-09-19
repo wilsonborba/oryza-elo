@@ -1,9 +1,9 @@
 [package]
-name = "oryza-elo"
+name = "oryzaelo_engine"
 version = "0.1.0"
 edition = "2021"
 authors = ["Wilson Borba <wilson@asodya.com>"]
-description = "Oryza-Elo: High-performance edge computing microservice for rice phenological stage classification"
+description = "Oryzaelo-Engine: High-performance edge computing microservice for rice phenological stage classification"
 
 [dependencies]
 tokio = { version = "1.38", features = ["full"] }
@@ -17,9 +17,9 @@ dotenvy = "0.15"
 lazy_static = "1.5"
 
 [[bin]]
-name = "oryza-elo"
+name = "oryzaelo_engine"
 path = "src/main.rs"
 
 [lib]
-name = "oryza_elo"
+name = "oryzaelo_engine"
 path = "src/lib.rs"
