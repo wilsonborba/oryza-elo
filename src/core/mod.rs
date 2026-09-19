@@ -10,4 +10,7 @@
 //! 3. Se um agente planeja criar ou alterar qualquer diretório que não foi explicitamente
 //!    alinhado com o usuário, ele DEVE PARAR E PEDIR AUTORIZAÇÃO ANTES.
 
+pub mod error;
 pub mod settings;
+
+pub use error::*;
