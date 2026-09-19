@@ -49,10 +49,11 @@ pub fn create_router(state: AppState) -> Router {
         .route("/phenology/predict", post(phenology::predict_stage))
         .route("/phenology/latest", get(phenology::get_latest_prediction))
         .route("/phenology/history", get(phenology::get_prediction_history))
-        // Edge Node Configuration & Hardware Benchmarks
+        // Edge Node Configuration & Hardware Latency Benchmarks
         .route("/config", get(config::get_all_config).put(config::update_config))
-        .route("/latency-benchmark", get(benchmark::run_latency_benchmark))
+        .route("/latency", get(benchmark::run_latency_benchmark))
         .route("/benchmarks/latency", get(benchmark::run_latency_benchmark));
+
 
 
     let mut router = Router::new()

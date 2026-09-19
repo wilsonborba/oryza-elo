@@ -279,9 +279,9 @@ async fn test_full_api_e2e_lifecycle() {
     let history_records: Value = serde_json::from_slice(&body).unwrap();
     assert!(history_records.as_array().unwrap().len() >= 1);
 
-    // 11. Test Live Edge Latency Benchmark Endpoint
+    // 11. Test Live Edge Latency Benchmark Endpoint (/latency and /benchmarks/latency)
     let req = Request::builder()
-        .uri("/api/v1/latency-benchmark?iterations=50")
+        .uri("/api/v1/latency?iterations=50")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -294,10 +294,19 @@ async fn test_full_api_e2e_lifecycle() {
     assert_eq!(benchmark["iterations"], 50);
     assert!(benchmark["mean_latency_ms"].as_f64().unwrap() < 5.0);
     println!(
-        "Live Edge Latency Benchmark: Mean: {:.4} ms, Speedup vs 5ms: {:.1}x",
+        "Live Edge Latency Benchmark (/latency): Mean: {:.4} ms, Speedup vs 5ms: {:.1}x",
         benchmark["mean_latency_ms"].as_f64().unwrap(),
         benchmark["speedup_vs_edge_ceiling"].as_f64().unwrap()
     );
+
+    // Also verify alias /benchmarks/latency
+    let req_alias = Request::builder()
+        .uri("/api/v1/benchmarks/latency?iterations=20")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+    let resp_alias = app.clone().oneshot(req_alias).await.unwrap();
+    assert_eq!(resp_alias.status(), StatusCode::OK);
 
     println!("All E2E API integration tests passed successfully!");
 }
