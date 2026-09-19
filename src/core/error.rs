@@ -56,3 +56,33 @@ pub enum AppError {
 
 pub type Result<T> = std::result::Result<T, AppError>;
 pub type DomainResult<T> = std::result::Result<T, DomainError>;
+
+impl axum::response::IntoResponse for AppError {
+    fn into_response(self) -> axum::response::Response {
+        let (status, code) = match &self {
+            AppError::NotFound(_) => (axum::http::StatusCode::NOT_FOUND, "NOT_FOUND"),
+            AppError::BadRequest(_) => (axum::http::StatusCode::BAD_REQUEST, "BAD_REQUEST"),
+            AppError::Domain(DomainError::ValidationError(_))
+            | AppError::Domain(DomainError::InvalidCoordinate { .. })
+            | AppError::Domain(DomainError::InvalidWeatherRecord { .. })
+            | AppError::Domain(DomainError::UnknownPhenologyStage(_))
+            | AppError::Domain(DomainError::UnknownLocale(_)) => {
+                (axum::http::StatusCode::BAD_REQUEST, "DOMAIN_VALIDATION_ERROR")
+            }
+            AppError::Domain(DomainError::InsufficientWeatherData { .. }) => {
+                (axum::http::StatusCode::UNPROCESSABLE_ENTITY, "INSUFFICIENT_DATA")
+            }
+            _ => (
+                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                "INTERNAL_SERVER_ERROR",
+            ),
+        };
+
+        let body = serde_json::json!({
+            "error": self.to_string(),
+            "code": code,
+        });
+
+        (status, axum::Json(body)).into_response()
+    }
+}

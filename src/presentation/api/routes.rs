@@ -1,0 +1,77 @@
+//! # Oryza-Elo Architecture Guardrail: API Routes
+//!
+//! Route registration, middlewares and fallback static service mounting.
+
+use crate::presentation::api::handlers::{
+    config, devices, health, parcels, phenology, weather,
+};
+use crate::presentation::api::state::AppState;
+use axum::routing::{get, post};
+use axum::Router;
+use std::path::Path;
+use tower_http::cors::CorsLayer;
+use tower_http::services::ServeDir;
+use tower_http::trace::TraceLayer;
+use tracing::{info, warn};
+
+/// Builds the complete Axum Router with all v1 endpoints and conditional Flutter Web ServeDir.
+pub fn create_router(state: AppState) -> Router {
+    let settings = state.settings;
+
+    let api_v1 = Router::new()
+        // Health
+        .route("/health", get(health::health_check))
+        // Parcels CRUD
+        .route("/parcels", get(parcels::list_parcels).post(parcels::create_parcel))
+        .route(
+            "/parcels/:id",
+            get(parcels::get_parcel)
+                .put(parcels::update_parcel)
+                .delete(parcels::delete_parcel),
+        )
+        // Device Presets & Custom Mappings
+        .route("/devices/presets", get(devices::list_presets))
+        .route(
+            "/devices/mappings",
+            get(devices::list_mappings).post(devices::create_mapping),
+        )
+        .route(
+            "/devices/mappings/:id",
+            get(devices::get_mapping).delete(devices::delete_mapping),
+        )
+        // Weather Ingestion & Time Series
+        .route("/weather/upload-csv", post(weather::upload_csv_multipart))
+        .route("/weather/ingest", post(weather::ingest_csv_json))
+        .route("/weather/records", get(weather::get_records))
+        // Phenology Inference & History
+        .route("/phenology/predict", post(phenology::predict_stage))
+        .route("/phenology/latest", get(phenology::get_latest_prediction))
+        .route("/phenology/history", get(phenology::get_prediction_history))
+        // Edge Node Configuration
+        .route("/config", get(config::get_all_config).put(config::update_config));
+
+    let mut router = Router::new()
+        .route("/health", get(health::health_check))
+        .nest("/api/v1", api_v1)
+        .layer(CorsLayer::permissive())
+        .layer(TraceLayer::new_for_http())
+        .with_state(state);
+
+    // Conditional ServeDir for Pre-built Flutter Web Assets (Raspberry Pi Edge Mode)
+    if let Some(ref static_path) = settings.static_dir {
+        if Path::new(static_path).exists() {
+            info!(
+                static_dir = %static_path,
+                "Montando fallback de assets estáticos do Flutter Web (modo local/Raspberry Pi)"
+            );
+            router = router.fallback_service(ServeDir::new(static_path));
+        } else {
+            warn!(
+                static_dir = %static_path,
+                "STATIC_DIR configurado, mas diretório não encontrado no disco. Servindo apenas API."
+            );
+        }
+    }
+
+    router
+}
