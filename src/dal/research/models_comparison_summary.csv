@@ -1,0 +1,6 @@
+model,task,validation_protocol,macro_f1,balanced_accuracy,weighted_f1,train_time_sec,inference_latency_ms,edge_format,status
+CatBoost Classifier,7 Phenological Stages,Stratified 5-Fold CV,0.5696,0.582,0.6731,20.0,0.0188,ONNX / CBM / JSON,Champion Edge Model
+XGBoost Classifier,7 Phenological Stages,Stratified 5-Fold CV,0.5921,0.5669,0.7135,132.43,0.0206,Tree Hist / JSON,Benchmark Baseline
+Random Forest Classifier,7 Phenological Stages,Stratified 5-Fold CV,0.5812,0.6224,0.6751,3.27,0.15,ONNX / Scikit-Learn,Benchmark Baseline
+CatBoost Classifier (Spatial Zero-Shot),7 Phenological Stages,Spatial GroupKFold (Province),0.2851,0.2746,0.4858,18.5,0.0188,CBM / ONNX,Geographic Generalization Test
+CatBoost Macro-Scale (BBCH 3-Phase),3 Macro Phases (BBCH),Stratified 5-Fold CV,0.7339,0.7812,0.8036,16.2,0.018,ONNX / CBM,Production Macro-Phenology

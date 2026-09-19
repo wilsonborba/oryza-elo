@@ -1,0 +1,11 @@
+task,class_th,class_en,bbch_code,support,support_pct,precision,recall,f1_score
+7_classes,แตกกอ,Tillering,20-29,1128,47.04,0.7547,0.7553,0.755
+7_classes,ระยะกล้า,Seedling,10-19,559,23.31,0.679,0.7227,0.7002
+7_classes,ออกรวง,Heading / Panicle Exsertion,50-59,301,12.55,0.5859,0.4983,0.5386
+7_classes,ตั้งท้อง,Booting,40-49,189,7.88,0.4121,0.3598,0.3842
+7_classes,ก่อนเก็บเกี่ยว,Pre-Harvest / Ripening,70-89,135,5.63,0.6706,0.8444,0.7475
+7_classes,ออกดอก,Flowering / Anthesis,60-69,65,2.71,0.4211,0.3692,0.3934
+7_classes,ก่อนเก็บเกี่ยวเกี่ยว,Late Ripening / Harvest-ready,90-99,21,0.88,0.4231,0.5238,0.4681
+3_macro_phases,1_Vegetative,Vegetative Phase,10-29,1687,70.35,0.9142,0.8275,0.8687
+3_macro_phases,2_Reproductive,Reproductive Phase,40-69,555,23.14,0.5848,0.6955,0.6354
+3_macro_phases,3_Ripening,Ripening & Harvest Phase,70-99,156,6.51,0.6066,0.8205,0.6975

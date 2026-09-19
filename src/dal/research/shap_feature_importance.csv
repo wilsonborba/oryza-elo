@@ -1,0 +1,13 @@
+rank,feature,domain,mean_abs_shap,agronomic_rationale
+1,province,Geographic / Regional,0.3097,"Altitude, basin conditioning, regional sowing calendars"
+2,rice_variety,Genetics / Maturity,0.1875,Genetic maturity duration and photoperiod sensitivity (KDML105 vs RD43)
+3,rice_ecosystem,Water Regime / Ecology,0.1412,Irrigated vs rainfed lowland moisture dynamics
+4,photoperiod_hours,Astronomical Photoperiod,0.1362,Astronomical daylength required for short-day floral induction
+5,ptq_30d,Radiative / Photosynthesis,0.0939,Photothermal quotient (Rad/GDD) driving panicle differentiation
+6,lat_clean,Spatial Coordinate,0.0862,Latitude determining solar zenith angle and climatic zone
+7,lon_clean,Spatial Coordinate,0.075,Longitude determining monsoon path and rainfall onset
+8,day_of_year,Phenological Calendar,0.0726,Cropping calendar seasonality and monsoon alignment
+9,dtr_std_60d,Thermal Stress,0.0725,Diurnal temperature variability modulating night respiration and floret fertility
+10,dtr_std_7d,Thermal Stress,0.0679,Short-term thermal shock indicator affecting anthesis
+11,rain_max_60d,Hydrological,0.0509,Seasonal maximum storm events regulating field flooding depth
+12,rh_mean_60d,Atmospheric Humidity,0.049,Vapor pressure deficit and transpirational demand
