@@ -19,8 +19,10 @@ pub fn create_router(state: AppState) -> Router {
     let settings = state.settings;
 
     let api_v1 = Router::new()
-        // Health
-        .route("/health", get(health::health_check))
+        // Health Probes: System (Host OS/Hardware) vs Application (SQLite, ONNX, Cron)
+        .route("/health", get(health::consolidated_health))
+        .route("/health/system", get(health::system_health))
+        .route("/health/app", get(health::app_health))
         // Parcels CRUD
         .route("/parcels", get(parcels::list_parcels).post(parcels::create_parcel))
         .route(
@@ -49,15 +51,18 @@ pub fn create_router(state: AppState) -> Router {
         .route("/phenology/predict", post(phenology::predict_stage))
         .route("/phenology/latest", get(phenology::get_latest_prediction))
         .route("/phenology/history", get(phenology::get_prediction_history))
-        // Edge Node Configuration & Hardware Latency Benchmarks
+        // Edge Node Configuration
         .route("/config", get(config::get_all_config).put(config::update_config))
-        .route("/latency", get(benchmark::run_latency_benchmark))
-        .route("/benchmarks/latency", get(benchmark::run_latency_benchmark));
-
-
+        // Granular Real-Time Edge Benchmarks
+        .route("/benchmarks/latency", get(benchmark::run_latency_benchmark))
+        .route("/benchmarks/biomet", get(benchmark::run_biomet_benchmark))
+        .route("/benchmarks/storage", get(benchmark::run_storage_benchmark))
+        .route("/benchmarks/throughput", get(benchmark::run_throughput_benchmark));
 
     let mut router = Router::new()
-        .route("/health", get(health::health_check))
+        // Root Liveness Ping (Infrastructure, Docker, systemd)
+        .route("/health", get(health::liveness_ping))
+        .route("/ping", get(health::liveness_ping))
         .nest("/api/v1", api_v1)
         .layer(CorsLayer::permissive())
         .layer(TraceLayer::new_for_http())

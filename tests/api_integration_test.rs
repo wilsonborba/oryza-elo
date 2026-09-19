@@ -38,20 +38,47 @@ async fn setup_test_app() -> (axum::Router, AppState) {
 async fn test_full_api_e2e_lifecycle() {
     let (app, state) = setup_test_app().await;
 
-    // 1. Test Health Check
+    // 1. Test Differentiated Health Checks
+    // 1a. Root Liveness Ping (/health)
     let req = Request::builder()
-        .uri("/api/v1/health")
+        .uri("/health")
         .method("GET")
         .body(Body::empty())
         .unwrap();
-
     let resp = app.clone().oneshot(req).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
     let body = resp.into_body().collect().await.unwrap().to_bytes();
-    let json: Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(json["status"], "healthy");
-    assert_eq!(json["sqlite"], "connected");
-    assert_eq!(json["onnx_engine"], "loaded");
+    let ping_json: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(ping_json["status"], "ok");
+
+    // 1b. System Health (/api/v1/health/system)
+    let req = Request::builder()
+        .uri("/api/v1/health/system")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let sys_json: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(sys_json["status"], "healthy");
+    assert_eq!(sys_json["scope"], "system");
+
+    // 1c. Application Health (/api/v1/health/app)
+    let req = Request::builder()
+        .uri("/api/v1/health/app")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let app_json: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(app_json["status"], "healthy");
+    assert_eq!(app_json["scope"], "application");
+    assert_eq!(app_json["sqlite"]["status"], "connected");
+    assert_eq!(app_json["onnx_engine"]["status"], "loaded");
+
 
     // 2. Test Device Presets List
     let req = Request::builder()
@@ -279,9 +306,10 @@ async fn test_full_api_e2e_lifecycle() {
     let history_records: Value = serde_json::from_slice(&body).unwrap();
     assert!(history_records.as_array().unwrap().len() >= 1);
 
-    // 11. Test Live Edge Latency Benchmark Endpoint (/latency and /benchmarks/latency)
+    // 11. Test Granular Real-Time Edge Benchmarks (/api/v1/benchmarks/*)
+    // 11a. Latency Benchmark (/benchmarks/latency)
     let req = Request::builder()
-        .uri("/api/v1/latency?iterations=50")
+        .uri("/api/v1/benchmarks/latency?iterations=50")
         .method("GET")
         .body(Body::empty())
         .unwrap();
@@ -294,19 +322,67 @@ async fn test_full_api_e2e_lifecycle() {
     assert_eq!(benchmark["iterations"], 50);
     assert!(benchmark["mean_latency_ms"].as_f64().unwrap() < 5.0);
     println!(
-        "Live Edge Latency Benchmark (/latency): Mean: {:.4} ms, Speedup vs 5ms: {:.1}x",
+        "Live Edge Latency Benchmark: Mean: {:.4} ms, Speedup vs 5ms: {:.1}x",
         benchmark["mean_latency_ms"].as_f64().unwrap(),
         benchmark["speedup_vs_edge_ceiling"].as_f64().unwrap()
     );
 
-    // Also verify alias /benchmarks/latency
-    let req_alias = Request::builder()
-        .uri("/api/v1/benchmarks/latency?iterations=20")
+    // 11b. Biomet Benchmark (/benchmarks/biomet)
+    let req = Request::builder()
+        .uri("/api/v1/benchmarks/biomet?iterations=50")
         .method("GET")
         .body(Body::empty())
         .unwrap();
-    let resp_alias = app.clone().oneshot(req_alias).await.unwrap();
-    assert_eq!(resp_alias.status(), StatusCode::OK);
+
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let biomet_bench: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(biomet_bench["status"], "passed");
+    assert_eq!(biomet_bench["features_computed"], 44);
+    assert!(biomet_bench["mean_duration_ms"].as_f64().unwrap() < 1.0);
+    println!(
+        "Live Biomet Feature Benchmark: Mean: {:.4} ms ({:.2} µs), Speedup vs 1ms: {:.1}x",
+        biomet_bench["mean_duration_ms"].as_f64().unwrap(),
+        biomet_bench["mean_duration_us"].as_f64().unwrap(),
+        biomet_bench["speedup_vs_target"].as_f64().unwrap()
+    );
+
+    // 11c. Storage Benchmark (/benchmarks/storage)
+    let req = Request::builder()
+        .uri("/api/v1/benchmarks/storage")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let storage_bench: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(storage_bench["status"], "passed");
+    println!(
+        "Live Storage Benchmark: Query Latency: {:.4} ms, Total Weather Records: {}",
+        storage_bench["query_latency_ms"].as_f64().unwrap(),
+        storage_bench["total_weather_records"].as_i64().unwrap()
+    );
+
+    // 11d. Throughput Benchmark (/benchmarks/throughput)
+    let req = Request::builder()
+        .uri("/api/v1/benchmarks/throughput?iterations=100")
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let resp = app.clone().oneshot(req).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let tp_bench: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(tp_bench["status"], "passed");
+    println!(
+        "Live Throughput Benchmark: {:.1} inferences/sec (batch duration: {:.2} ms)",
+        tp_bench["inferences_per_second"].as_f64().unwrap(),
+        tp_bench["total_duration_ms"].as_f64().unwrap()
+    );
 
     println!("All E2E API integration tests passed successfully!");
 }
