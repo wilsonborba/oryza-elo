@@ -5,5 +5,7 @@
 //! fenológica, orquestração entre adaptadores DAL e respostas para presentation.
 
 pub mod agronomic_advisor;
+pub mod biomet_calculator;
 
 pub use agronomic_advisor::*;
+pub use biomet_calculator::*;
