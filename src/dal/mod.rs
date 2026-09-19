@@ -15,7 +15,9 @@
 //!    alinhado com o usuário, ele DEVE PARAR E PEDIR AUTORIZAÇÃO ANTES.
 
 pub mod database;
+pub mod inference;
 pub mod local;
 pub mod remote;
 
 pub use database::*;
+pub use inference::*;
