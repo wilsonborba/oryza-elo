@@ -25,6 +25,14 @@ catboost_info/
 /target/
 **/*.rs.bk
 
+# Local SQLite databases (strictly in src/dal/data/local/)
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+src/dal/data/local/*.db
+src/dal/data/local/*.sqlite
+
 # Local/assistant context and scratch files
 context/
 .scratch/
